@@ -19,6 +19,15 @@ cdef extern from "tctdb.h":
         #TDBIDX *idxs
         int   inum
         bint tran
+
+    #cdef enum:
+        #    TDBTLARGE = 1
+        #TDBTDEFLATE = 1 << 1
+        #TDBTBZIP = 1 << 2
+        #TDBTTCBS = 1 << 3
+        #TDBTEXCODEC = 1 << 4
+
+
     ctypedef struct TDBQRY:
         pass
     cdef enum:                 # Query conditions

@@ -94,4 +94,7 @@ since it's schemaless, you can add anything:
 
     >>> import os; os.unlink('doctest.tct')
 """
-from ctctable import TCTable, Col, TCException
+from ctctable import TCTable, Col, TCException, \
+    TDBTLARGE, TDBTDEFLATE, TDBTBZIP, TDBTTCBS, TDBTEXCODEC
+
+

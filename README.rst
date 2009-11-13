@@ -19,8 +19,10 @@ Also adds a few more niceties, see below.
 
 Install
 -------
+first, install Tokyo-Cabinet `source`_, then,
 from a the directory containing this file:
 ::
+
 
     # requires cython for now.
     $ cython src/ctctable.pyx
@@ -91,6 +93,15 @@ this is still in flux (can takes lists of numbers or strings as well)
 
     >>> results = tbl.select(Col('fname').contains('e'))
     ['fred', 'ted']
+
+between
+*******
+use for number querying between a min and max. includes the endpoints.
+::
+
+    >>> r = tbl.select(Col('age').between(180, 220))
+    >>> [v['age'] for k, v in r]
+    ['220', '180', '180']
 
 numeric queries (richcmp)
 *************************
@@ -192,6 +203,46 @@ delete as expected for a dictionary interface.
     >>> print tbl.get('weird')
     None
 
+Tuning
+======
+Tokyo Cabinet allows you to `tune` or `optimize` a table. the available parameters are:
+
+        * 'bnum' specifies the number of elements of the bucket array.
+          Suggested size of 'bnum' is about from 0.5 to 4 times of the number
+          of all records to be stored. default is about 132K.
+
+        * 'apow' specifies the size of record alignment by power of 2.
+           The default value is 4 standing for 2^4=16.
+
+        * 'fpow' specifies the maximum number of elements of the free block
+          pool by power of 2. The default value is 10 standing for 2^10=1024.
+
+        * 'opts' specifies options by bitwise-or (|):
+          + 'TDBTLARGE' must be specified to use a database larger than 2GB.
+          + 'TDBTDEFLATE' use Deflate encoding.
+          + 'TDBTBZIP' use BZIP2 encoding.
+          + 'TDBTTCBS' use TCBS encoding.
+
+tune
+****
+The arguments can be sent to the constructor.
+::
+
+    >>> t = TCTable("some.tct", 'w', bnum=1234, fpow=6, \
+    ...                    opts=tctable.TDBTLARGE | tctable.TDBTBZIP)
+
+optimize
+********
+optimize is called on an database opened with mode='w'. if no arguments are
+specified, it will automatically adjust 'bnum' (only) according to the number
+of elements in the table.
+::
+
+    >>> t = TCTable("some.tct", 'w')
+    # ... add some records ...
+    >>> t.optimize()
+
+
 See Also
 --------
 
@@ -202,6 +253,7 @@ See Also
       transactions on top of `tokyo cabinet`_ .
 
     * to help out, see TODO list at top of `ctcable.pyx`_
+
     * tokyo cabinet database api http://1978th.net/tokyocabinet/spex-en.html#tctdbapi
 
     
@@ -211,4 +263,5 @@ See Also
 .. _`tc`: http://github.com/rsms/tc
 .. _`cython`: http://cython.org/
 .. _`ctcable.pyx`: http://github.com/brentp/tctable/blob/master/src/ctctable.pyx
+.. _`source`: http://sourceforge.net/projects/tokyocabinet/files/
 

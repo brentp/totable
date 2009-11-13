@@ -5,11 +5,11 @@
 TODO
 =====
 * docstrings.
-* document tuning params.
-* document between
 * indexes tctdbsetindex
 * allow specifying which columns are ints/floats.
+* DONE: document between
 * DONE: tune/optimize.
+* DONE: document tuning params.
 * STARTED: make a class for tcmap
 * tctdbcopy (backup).
 * benchmark.
@@ -17,6 +17,12 @@ TODO
 
 cimport python_string as ps
 DEF DEFAULT_OPTS = 0
+TDBTLARGE = 1
+TDBTDEFLATE = 1 << 1
+TDBTBZIP = 1 << 2
+TDBTTCBS = 1 << 3
+TDBTEXCODEC = 1 << 4
+
 
 tokyo_cabinet_version = c_tcversion
 __version__ = '0.1.1'

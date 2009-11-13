@@ -5,18 +5,21 @@
 TODO
 =====
 * docstrings.
-* Implement the missing functions (e.g. tctdbsetindex(), transactions,
-performance config).
-* alow the user to specify which columns are ints/floats.
-* tune.
-* make a class for tcmap
+* document tuning params.
+* document between
+* indexes tctdbsetindex
+* allow specifying which columns are ints/floats.
+* DONE: tune/optimize.
+* STARTED: make a class for tcmap
 * tctdbcopy (backup).
+* benchmark.
 """
 
 cimport python_string as ps
+DEF DEFAULT_OPTS = 0
 
 tokyo_cabinet_version = c_tcversion
-__version__ = '0.1'
+__version__ = '0.1.1'
 
 class TCException(Exception):
     '''An error communicating with the Tokyo Cabinet database.'''
@@ -49,12 +52,34 @@ cdef class TCTable(object):
         cdef int errorcode = tctdbecode(self._state)
         msg = <char*>tctdberrmsg(errorcode)
         return message + ' ' + msg.capitalize()
+
+    def optimize(self, int64_t bnum=-1, int8_t apow=-1, int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS):
+        if self.mode != 'w':
+            raise TCException('Unable optimize unless open with mode="w"')
+
+        cdef bint success = tctdboptimize(self._state, bnum, apow, fpow, opts)
+        if not success:
+            self._throw('Unable to optimize {0}.'.format(str(self.path)))
+        return success
     
-    def __init__(self, path, mode='r'):
+    def __init__(self, path, mode='r', int64_t bnum=-1, int8_t apow=-1, int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS):
+        """
+        'bnum' specifies the number of elements of the bucket array. If it is not more than 0, the default value is specified. The default value is 131071. Suggested size of the bucket array is about from 0.5 to 4 times of the number of all records to be stored.
+        'apow' specifies the size of record alignment by power of 2. If it is negative, the default value is specified. The default value is 4 standing for 2^4=16.
+        'fpow' specifies the maximum number of elements of the free block pool by power of 2. If it is negative, the default value is specified. The default value is 10 standing for 2^10=1024.
+        'opts' specifies options by bitwise-or: `TDBTLARGE' specifies that the size of the database can be larger than 2GB by using 64-bit bucket array, `TDBTDEFLATE' specifies that each record is compressed with Deflate encoding, `TDBTBZIP' specifies that each record is compressed with BZIP2 encoding, `TDBTTCBS' specifies that each record is compressed with TCBS encoding.
+        """
         self.path = path
         self.mode = mode
+        cdef bint success
         self._state = tctdbnew()
-        cdef bint success = tctdbopen(self._state, path, 6 if mode=='w' else 1)
+        if bnum != -1 or apow != -1 or fpow != -1 or opts != DEFAULT_OPTS:
+            success = tctdbtune(self._state, bnum, apow, fpow, opts)
+            if not success:
+                self._throw('Unable to tune {0} for {1}.'.format 
+                (str(path), 'writing' if mode == 'w' else 'reading'))
+
+        success = tctdbopen(self._state, path, 6 if mode=='w' else 1)
         if not success:
             self._throw('Unable to open {0} for {1}.'.format \
                 (str(path), 'writing' if mode == 'w' else 'reading'))

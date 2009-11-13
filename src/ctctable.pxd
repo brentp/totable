@@ -74,7 +74,10 @@ cdef extern from "tctdb.h":
     void tctdbdel      (TCTDB *tdb)
     int tctdbecode     (TCTDB *tdb)
     bint tctdbsetmutex(TCTDB *tdb)
+
     bint tctdbtune(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts)
+    bint tctdboptimize(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts)
+
     bint tctdbsetcache(TCTDB *tdb, int32_t rcnum, int32_t lcnum, int32_t ncnum)
     bint tctdbsetxmsiz(TCTDB *tdb, int64_t xmsiz)
     bint tctdbopen    (TCTDB *tdb, char *path, int omode)

@@ -34,6 +34,7 @@ class TestTCTable(unittest.TestCase):
     def tearDown(self):
         self.table.close()
         rm(self.path)
+        rm(self.path + '.tune')
     
     def test_len(self):
         t = self.table
@@ -117,6 +118,16 @@ class TestTCTable(unittest.TestCase):
         r = t.select(Col('name').matches('e[es]'))
         self.assertEquals(self.get_cols(r), ['Beethoven', 'Florestan'])
 
+    def test_tune(self):
+        t = TCTable(self.path + ".tune", 'w', bnum=1234, fpow=6)
+        
+
+        t.close()
+
+    def test_optimize(self):
+        t = TCTable(self.path + ".tune", 'w')
+        t.optimize()
+        t.close()
 
 
     def test_select_startswith_ends_with(self):

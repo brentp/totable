@@ -54,23 +54,18 @@ Example Use
     >>> len(tbl)
     14
 
+Col
+===
+
+`Col`_ as sent to the select method makes it easy to do queries on a database
+the format is Col(colname) == 'Fred' where colname is one of the keys in the
+dictionary items in the database. or can use kwargs to select()
+::
+
     >>> tbl.select(lname='cox')
     [('1', {'lname': 'cox', 'age': '22', 'fname': 'jane'}), ('12', {'lname': 'cox', 'age': '70', 'fname': 'ted'})]
 
-
-order by
-========
-::
-
-    >>> [v['fname'] for k, v in tbl.select(lname='cox', order='-fname')]
-    ['ted', 'jane']
-
-    # ascending
-    >>> [v['fname'] for k, v in tbl.select(lname='cox', order='+fname')]
-    ['jane', 'ted']
-
-Col
-===
+though using Col gives more power
 
 startswith
 **********
@@ -89,26 +84,44 @@ endswith
     >>> [d['fname'] + ' ' + d['lname'] for k, d in results]
     ['jane ark']
 
-numeric queries (richcmp)
-*************************
+contains
+********
+this is still in flux (can takes lists of numbers or strings as well)
 ::
 
-    #do number based queries by using (you guessed it) a number
+    >>> results = tbl.select(Col('fname').contains('e'))
+    ['fred', 'ted']
+
+numeric queries (richcmp)
+*************************
+
+in TC, everything is stored as strings, but you can force
+number based comparisons by using (you guessed it) a number.
+Or using a string for non-numeric comparisons.
+
+::
+
     >>> results = tbl.select(Col('age') > 68)
     >>> [d['age'] for k, d in results]
     ['70', '72']
 
 combining queries
 *****************
+
+just add multiple Col() arguments to the select() call
+and they will be essentially *and*'ed together.
+
 ::
 
-    #combine queries
     >>> results = tbl.select(Col('age') > 68, Col('age') < 72)
     >>> [d['age'] for k, d in results]
     ['70']
 
 Negate(~)
 *********
+
+for example get everything that's not a given value...
+
 ::
 
     >>> results = tbl.select(~Col('age') <= 68)
@@ -122,6 +135,8 @@ Negate(~)
 
 Regular Expression Matching
 ***************************
+supports normal regular expression characters "[ $ ^ | " , etc.
+
 ::
 
     >>> results = tbl.select(Col('fname').matches("a"))
@@ -135,26 +150,44 @@ Regular Expression Matching
 
 Offset/Limit
 ============
+just like SQL, yo.
+
 ::
 
     >>> results = tbl.select(Col('age') < 68, limit=1)
     >>> len(results)
     1
 
-Schemaless
-==========
+order by
+========
+currently only works for string keys. use '-' for descending and 
+'+' for ascending
+
 ::
 
-    #since it's schemaless, you can add anything
+    >>> [v['fname'] for k, v in tbl.select(lname='cox', order='-fname')]
+    ['ted', 'jane']
+
+    # ascending
+    >>> [v['fname'] for k, v in tbl.select(lname='cox', order='+fname')]
+    ['jane', 'ted']
+
+Schemaless
+==========
+since it's schemaless, you can add anything
+
+::
+
     >>> tbl['weird'] = {"val": "hello"}
     >>> tbl['weird']
     {'val': 'hello'}
 
 Delete
 ======
+delete as expected for a dictionary interface.
+
 ::
 
-    #delete as expected
     >>> del tbl['weird']
     >>> print tbl.get('weird')
     None

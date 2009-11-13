@@ -91,7 +91,7 @@ contains
 this is still in flux (can takes lists of numbers or strings as well)
 ::
 
-    >>> results = tbl.select(Col('fname').contains('e'))
+    >> results = tbl.select(Col('fname').contains('e'))
     ['fred', 'ted']
 
 between
@@ -99,9 +99,9 @@ between
 use for number querying between a min and max. includes the endpoints.
 ::
 
-    >>> r = tbl.select(Col('age').between(180, 220))
+    >>> r = tbl.select(Col('age').between(68, 70))
     >>> [v['age'] for k, v in r]
-    ['220', '180', '180']
+    ['68', '70']
 
 numeric queries (richcmp)
 *************************
@@ -169,8 +169,8 @@ just like SQL, yo.
     >>> len(results)
     1
 
-order by
-========
+order
+=====
 currently only works for string keys. use '-' for descending and 
 '+' for ascending
 
@@ -183,6 +183,21 @@ currently only works for string keys. use '-' for descending and
     >>> [v['fname'] for k, v in tbl.select(lname='cox', order='+fname')]
     ['jane', 'ted']
 
+
+values
+======
+TC is a key-value store, but it also acts as a table. it may be
+convenient to get just the values as you'd expect from a database
+table. Note in all examples above, the 'k'ey is not used, only 
+the value dictionary. This can be made simpler with 'values_only'.
+When 'values_only' is True, some python call overhead is removed
+as well.
+
+::
+    >>> tbl.select(Col('fname').matches("^a"), values_only=True)
+    [{'lname': 'ddk', 'age': '32', 'fname': 'ann'}, {'lname': 'smith', 'age': '72', 'fname': 'ann'}]
+    
+
 Schemaless
 ==========
 since it's schemaless, you can add anything
@@ -193,7 +208,7 @@ since it's schemaless, you can add anything
     >>> tbl['weird']
     {'val': 'hello'}
 
-Delete
+delete
 ======
 delete as expected for a dictionary interface.
 
@@ -228,8 +243,11 @@ tune
 The arguments can be sent to the constructor.
 ::
 
+    >>> import tctable
     >>> t = TCTable("some.tct", 'w', bnum=1234, fpow=6, \
     ...                    opts=tctable.TDBTLARGE | tctable.TDBTBZIP)
+
+    >>> t.close()
 
 optimize
 ********
@@ -239,8 +257,10 @@ of elements in the table.
 ::
 
     >>> t = TCTable("some.tct", 'w')
+
     # ... add some records ...
     >>> t.optimize()
+    True
 
 
 See Also

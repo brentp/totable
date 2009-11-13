@@ -68,6 +68,12 @@ make some fake data
     >>> sorted(set([d['fname'] for k, d in results]))
     ['ann']
 
+# since tc is a key-value store, queries return keys and values.
+# but when treating it as a table, you may just want values.
+# this makes the kv store act even more like a table.
+    >>> tbl.select(Col('fname').matches("^a"), values_only=True)
+    [{'lname': 'ddk', 'age': '32', 'fname': 'ann'}, {'lname': 'smith', 'age': '72', 'fname': 'ann'}]
+
 
 # there are also limit, offset kwargs..
     >>> results = tbl.select(Col('age') < 68, limit=1)

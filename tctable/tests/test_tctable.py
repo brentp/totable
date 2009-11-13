@@ -162,6 +162,11 @@ class TestTCTable(unittest.TestCase):
             r = t.select(Col('age').between(0, 220), limit=i)
             self.assertEquals(len(r), i, r)
 
+    def test_values(self):
+        t = self.table
+        r = t.select(name='Chopin', values_only=True)
+        self.assertEquals(r, [{'type': 'person', 'age': '180', 'profession': 'composer', 'name': 'Chopin'}])
+
     def test_combined(self):
         t = self.table
         r = t.select(Col('age').between(180, 220), Col('name').contains('an'))

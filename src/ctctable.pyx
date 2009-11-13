@@ -16,6 +16,7 @@ TODO
 """
 
 cimport python_string as ps
+
 DEF DEFAULT_OPTS = 0
 TDBTLARGE = 1
 TDBTDEFLATE = 1 << 1
@@ -128,8 +129,8 @@ cdef class TCTable(object):
         if not success:
             self._throw('Unable to write to database '+ str(k))
 
-    cdef dict _tcmap_to_dict(self, TCMAP *tcmap):
-        cdef dict dic = {} 
+    cdef dict _tcmap_to_dict(TCTable self, TCMAP *tcmap):
+        cdef dict d = {} 
         tcmapiterinit(tcmap) # Initialize the map iterator
         cdef char *kptr, *vptr
         cdef int ksiz, vsiz
@@ -141,12 +142,12 @@ cdef class TCTable(object):
 
             pykey = ps.PyString_FromStringAndSize(kptr, <Py_ssize_t>ksiz)
             pyval = ps.PyString_FromStringAndSize(vptr, <Py_ssize_t>vsiz)
-            dic[pykey] = pyval
+            d[pykey] = pyval
 
-        return dic
+        return d
 
 
-    def _key_to_dict(self, key):
+    cdef dict _key_to_dict(TCTable self, key):
         """INTERNAL: take the database key and return
         the dicitonary associated with that key"""
         cdef char *kbuf
@@ -159,6 +160,11 @@ cdef class TCTable(object):
         cdef dict dic = self._tcmap_to_dict(tcmap)
         tcmapdel(tcmap)
         return dic
+
+    cdef dict _ckey_to_dict(TCTable self, char *kbuf, int ksiz):
+        cdef TCMAP *tcmap = tctdbget(self._state, kbuf, <int>ksiz)
+        return self._tcmap_to_dict(tcmap)
+
 
     def keep_or_put(self, k, dic):
         '''Takes as arguments a key (string) and a value (dict).
@@ -197,11 +203,10 @@ cdef class TCTable(object):
         '''Returns a record (as a dict) or raises KeyError.'''
         return self._key_to_dict(key)
     
-    def get(self, id, default=None):
+    cpdef get(self, key, default=None):
         try:
-            v = self[id]
-            if not v: return default
-            return v
+            v = self._key_to_dict(key)
+            return v or default
         except KeyError:
             return default
     
@@ -254,8 +259,9 @@ cdef class TCTable(object):
         return success
     
     def __len__(self):
-        cdef uint64_t number = tctdbrnum(self._state)
-        return number
+        return tctdbrnum(self._state)
+    #cdef uint64_t number = tctdbrnum(self._state)
+    #    return number
 
     cdef void _set_limit(TCTable self, TDBQRY* query_state, dict kwargs):
         limit = kwargs.pop('limit', None) 
@@ -285,7 +291,9 @@ cdef class TCTable(object):
         kwargs['delete'] = True
         return self.select(*args, **kwargs)
 
-    def select(self, *args, **kwargs):
+    def select(self, *args, bint values_only=False, **kwargs):
+        # cool. mixing *args and a single kwarg with kwargs
+        # not allowed in python 2.XX
 
         cdef TCQuery q = make_query(self._state)
         #cdef TDBQRY* query_state = tctdbqrynew(self._state)
@@ -294,7 +302,7 @@ cdef class TCTable(object):
         cdef int count
         cdef int i
 
-        kwskip = ('delete', 'order', 'count', 'limit', 'offset')
+        kwskip = ('delete', 'order', 'count', 'limit', 'offset', 'values_only')
 
         # tbl.select(name='fred', age=22)
         # convert age=22 to Col('age') == 22
@@ -303,15 +311,11 @@ cdef class TCTable(object):
             if colname in kwskip: continue
             args.append(Col(colname) == other)
 
-        
-
         for col in args:
             if col.invert:
                 col.op = col.op | TDBQCNEGATE
             tctdbqryaddcond(q._state, <char *>col.colname, <int>col.op, <char *>col.other)
 
-
-        # NOTE: this pops limit, offset from kwargs.
         self._set_limit(q._state, kwargs)
         self._set_order(q._state, kwargs)
             
@@ -319,26 +323,31 @@ cdef class TCTable(object):
             return tctdbqrysearchout(q._state)
 
         tclist = tctdbqrysearch(q._state)
-        count = tclistnum(tclist) # number of elements in the list
+        # number of elements in the list
+        count = tclistnum(tclist) 
 
         if 'count' in kwargs:
             tclistdel(tclist)
             return count
 
-
-        li = self._tclist_to_list(tclist, count)
+        li = self._tclist_to_list(tclist, count, values_only)
         tclistdel(tclist)
         return li
 
-    cdef list _tclist_to_list(self, TCLIST *tclist, int count):
+    cdef list _tclist_to_list(TCTable self, TCLIST *tclist, int count, bint values_only):
         # INTERNAL: the calling function is still responsible for deleting tclist.
         cdef list li = []
         cdef char *kbuf
         cdef int ksiz
+        cdef dict d
         for i in range(count):
             kbuf = <char *>tclistval(tclist, i, &ksiz)
-            key = ps.PyString_FromStringAndSize(kbuf, <Py_ssize_t>ksiz)
-            li.append((key, self.get(key)))
+            d = self._ckey_to_dict(kbuf, ksiz)
+            if values_only:
+                li.append(d)
+            else:
+                key = ps.PyString_FromStringAndSize(kbuf, <Py_ssize_t>ksiz)
+                li.append((key, d))
         return li
 
 cdef class Col(object):

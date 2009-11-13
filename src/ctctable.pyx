@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''This Cython module contains the TCTable class, a driver for
-the table database in Tokyo Cabinet.
-
-The TCQuery class represents a query to the table database.
-
-TO DO
+"""
+TODO
 =====
-
-* TCTable.get() should accept a *cols* argument to make it possible for the
-user to specify the desired columns.
-
+* docstrings.
 * Implement the missing functions (e.g. tctdbsetindex(), transactions,
 performance config).
-'''
+* alow the user to specify which columns are ints/floats.
+* tune.
+* make a class for tcmap
+* tctdbcopy (backup).
+"""
+
 cimport python_string as ps
 
 tokyo_cabinet_version = c_tcversion
@@ -24,23 +22,11 @@ class TCException(Exception):
     '''An error communicating with the Tokyo Cabinet database.'''
 
 cdef class TCTable(object):
-    '''A Tokyo Cabinet table database.
+    """A Tokyo Cabinet table database.
     
-    The TCTable constructor takes these parameters:
-    
-    *path* is the path to the database file to be opened. Its extension
-    is normally .tct.
-    
-    *mode* is either 'w' for write or 'r' for read.
-    
-    The object is used exactly as a Python dictionary; however,
-    all its values are dicts containing column:value pairs, where both
-    *column* and *value* must be instances of *bytes*.
-    
-    TODO: TCTable is not iterable; currently you have to tctable.query.all()
-    
-    TODO: Add transactions, vanish, tctdbcopy (backup).
-    '''
+    `path` is the path to the database file to be opened.
+    `mode` either 'w' for write or 'r' for read.
+    """
     cdef TCTDB* _state
     cdef readonly object path
     cdef readonly object mode
@@ -78,8 +64,6 @@ cdef class TCTable(object):
         '''Closes the database file and cleans memory, rendering this
         object useless.
         '''
-        #print 'Closing ' + str(self.path)
-        #cdef bint success = tctdbclose(self._state)
         if self.is_open:
             self.is_open = False
             tctdbdel(self._state)
@@ -102,12 +86,6 @@ cdef class TCTable(object):
 
     
     def __setitem__(self, k, dic):
-        '''Takes a key and a value and writes them as a table row.
-        The key must be a bytes instance.
-        The value must be a dictionary containing bytes.
-        '''
-        # When you alter this method, you probably modify keep_or_put() too.
-        # Copy the dictionary to a TCMAP
         cdef TCMAP * tcmap = self._dict_to_tcmap(dic)
         cdef char *kbuf
         cdef Py_ssize_t ksiz
@@ -434,11 +412,19 @@ cdef class Col(object):
         return self
 
     def between(self, low, high):
-        # includes end points.
         self.other = str(low) + ' ' + str(high)
         self.op = TDBQCNUMBT
         return self
 
+
+
+cdef class TCMap(object):
+    cdef TCMAP* _map
+    def __del__(self):
+        tcmapdel(self._map)
+
+cdef TCMap make_tcmap():
+    pass
 
 # this class just useful as it cleans itself up.
 # would be nicer to have this for tcmap...
@@ -450,3 +436,4 @@ cdef TCQuery make_query(TCTDB* tctdb):
     cdef TCQuery query = TCQuery()
     query._state = tctdbqrynew(tctdb)
     return query
+

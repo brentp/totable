@@ -12,7 +12,7 @@ code for this is stolen from `pykesto`_.
 This library builds on that by adding the Col() query interface. e.g.
 ::
 
-    tbl.query(Col('age') > 18, Col('name').startswith('T'))
+    tbl.select(Col('age') > 18, Col('name').startswith('T'))
 
 to allow querying columns with numbers and letters transparently.
 Also adds a few more niceties, see below.
@@ -201,10 +201,13 @@ See Also
     * `pykesto`_ the project from which this library is taken. aims to provide
       transactions on top of `tokyo cabinet`_ .
 
+    * to help out, see TODO list at top of `ctcable.pyx`_
+
     
 
 .. _`pykesto`: http://code.google.com/p/pykesto/
 .. _`tokyo cabinet`: http://1978th.net/tokyocabinet/
 .. _`tc`: http://github.com/rsms/tc
 .. _`cython`: http://cython.org/
+.. _`ctcable.pyx`: http://github.com/brentp/tctable/blob/master/src/ctctable.pyx
 

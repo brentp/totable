@@ -168,17 +168,17 @@ cdef class TCTable(object):
 
     cdef dict _tcmap_to_dict(TCTable self, TCMAP *tcmap):
         cdef dict d = {}
-        tcmapiterinit(tcmap) # Initialize the map iterator
-        cdef char *kptr, *vptr
+        tcmapiterinit(tcmap)
         cdef int ksiz, vsiz
-        kptr = <char *>tcmapiternext(tcmap, &ksiz)
-        while kptr != NULL:
 
+        cdef char *vptr, *kptr = <char *>tcmapiternext(tcmap, &ksiz)
+        while kptr != NULL:
             vptr = <char *>tcmapget(tcmap, <void *>kptr, ksiz, &vsiz)
 
             pykey = ps.PyString_FromStringAndSize(kptr, <Py_ssize_t>ksiz)
             pyval = ps.PyString_FromStringAndSize(vptr, <Py_ssize_t>vsiz)
             d[pykey] = pyval
+
             kptr = <char *>tcmapiternext(tcmap, &ksiz)
 
         return d
@@ -200,7 +200,9 @@ cdef class TCTable(object):
 
     cdef dict _ckey_to_dict(TCTable self, char *kbuf, int ksiz):
         cdef TCMAP *tcmap = tctdbget(self._state, kbuf, <int>ksiz)
-        return self._tcmap_to_dict(tcmap)
+        d = self._tcmap_to_dict(tcmap)
+        tcmapdel(tcmap)
+        return d
 
     def __iter__(self):
         tctdbiterinit(self._state)
@@ -363,7 +365,7 @@ cdef class TCTable(object):
             # they may reuse the Col object.
             if col.invert:
                 tctdbqryaddcond(q._state, <char *>col.colname, 
-                                <int>(col.op | TDBQCNEGATE, <char *>col.other)
+                                <int>(col.op | TDBQCNEGATE), <char *>col.other)
             else:
                 tctdbqryaddcond(q._state, <char *>col.colname, <int>col.op, 
                                 <char *>col.other)
@@ -524,8 +526,9 @@ cdef TCMap make_tcmap():
 # would be nicer to have this for tcmap...
 cdef class TCQuery(object):
     cdef TDBQRY* _state
-    def __del__(self):
+    def __dealloc__(self):
         tctdbqrydel(self._state)
+
 cdef TCQuery make_query(TCTDB* tctdb):
     cdef TCQuery query = TCQuery()
     query._state = tctdbqrynew(tctdb)

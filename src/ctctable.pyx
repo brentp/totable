@@ -211,7 +211,7 @@ cdef class TCTable(object):
             raise StopIteration
         cdef dict d = self._tcmap_to_dict(tcmap)
         tcmapdel(tcmap)
-        # the key is stored in the tcmap with it's key as ''
+        # the key is stored in the tcmap with its key as ''
         return d.pop(''), d
 
 

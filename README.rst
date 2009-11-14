@@ -262,6 +262,27 @@ of elements in the table.
     >>> t.optimize()
     True
 
+index
+*****
+create or delete a 's'tring or 'd'ecimal index on a column for faster queries.
+::    
+
+    # create a decimal index on the number column 'age'.
+    >>> tbl.create_index('age', 'd')
+    True
+
+    # create a 'string index on the string column 'fname'.
+    >>> tbl.create_index('fname', 's')
+    True
+
+    # remove the index.
+    >>> tbl.delete_index('fname')
+    True
+
+    # optimize the index
+    >>> tbl.optimize_index('age')
+    True
+
 
 See Also
 --------

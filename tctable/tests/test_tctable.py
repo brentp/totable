@@ -33,6 +33,9 @@ class TestTCTable(unittest.TestCase):
     
     def tearDown(self):
         self.table.close()
+        import glob
+        for f in glob.glob(self.path + ".*"):
+            rm(f)
         rm(self.path)
         rm(self.path + '.tune')
     
@@ -178,6 +181,16 @@ class TestTCTable(unittest.TestCase):
                     )
         self.assertEquals(r, [])
 
+
+    def test_index(self):
+        t = self.table
+
+        self.assertEquals(t.create_index('age', 'd'), True)
+        self.assertEquals(t.create_index('type', 's'), True)
+
+        self.assertEquals(t.delete_index('type'), True)
+        self.assertEquals(t.optimize_index('age'), True)
+        self.assertEquals(t.delete_index('age'), True)
 
 
     def test_negate(self):

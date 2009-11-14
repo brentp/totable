@@ -20,13 +20,15 @@ cdef extern from "tctdb.h":
         int   inum
         bint tran
 
-    #cdef enum:
-        #    TDBTLARGE = 1
-        #TDBTDEFLATE = 1 << 1
-        #TDBTBZIP = 1 << 2
-        #TDBTTCBS = 1 << 3
-        #TDBTEXCODEC = 1 << 4
 
+    cdef enum:
+        TDBITLEXICAL # 's'
+        TDBITDECIMAL # 'd'
+        # TODO qgram stuff for FTS
+        
+
+        TDBITOPT = 9998 # 'o'
+        TDBITVOID = 9999 # 'v'
 
     ctypedef struct TDBQRY:
         pass
@@ -86,6 +88,7 @@ cdef extern from "tctdb.h":
 
     bint tctdbtune(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts)
     bint tctdboptimize(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts)
+    bint tctdbsetindex(TCTDB *tdb, char *name, int type)
 
     bint tctdbsetcache(TCTDB *tdb, int32_t rcnum, int32_t lcnum, int32_t ncnum)
     bint tctdbsetxmsiz(TCTDB *tdb, int64_t xmsiz)

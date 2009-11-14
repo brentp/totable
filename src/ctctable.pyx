@@ -5,7 +5,8 @@
 TODO
 =====
 * docstrings.
-* indexes tctdbsetindex
+* fix contains()
+* DONE: indexes tctdbsetindex
 * allow specifying which columns are ints/floats.
 * DONE: document between
 * DONE: tune/optimize.
@@ -40,7 +41,6 @@ cdef class TCTable(object):
     cdef TCTDB* _state
     cdef readonly object path
     cdef readonly object mode
-    cdef bint is_open
 
     def __repr__(self):
         c = self.__class__.__name__
@@ -83,22 +83,19 @@ cdef class TCTable(object):
         if bnum != -1 or apow != -1 or fpow != -1 or opts != DEFAULT_OPTS:
             success = tctdbtune(self._state, bnum, apow, fpow, opts)
             if not success:
-                self._throw('Unable to tune {0} for {1}.'.format 
-                (str(path), 'writing' if mode == 'w' else 'reading'))
+                self._throw('Unable to tune {0}.'.format(str(path)))
 
         success = tctdbopen(self._state, path, 6 if mode=='w' else 1)
         if not success:
-            self._throw('Unable to open {0} for {1}.'.format \
-                (str(path), 'writing' if mode == 'w' else 'reading'))
-        self.is_open = True
+            self._throw('Unable to open {0} for {1}.'.format(str(path)))
     
     def close(self):
         '''Closes the database file and cleans memory, rendering this
         object useless.
         '''
-        if self.is_open:
-            self.is_open = False
+        if not self._state == NULL:
             tctdbdel(self._state)
+            self._state = NULL
 
     cdef TCMAP* _dict_to_tcmap(self, dict dic):
         """INTERNAL: take a dict and return the tcmap which must
@@ -115,6 +112,22 @@ cdef class TCTable(object):
             ps.PyString_AsStringAndSize(val, &vbuf, &vsiz)
             tcmapput(tcmap, kbuf, ksiz, vbuf, vsiz)
         return tcmap
+
+    def optimize_index(self, colname): 
+        return self.create_index(colname, 'o')
+    def delete_index(self, colname):
+        return self.create_index(colname, 'v')
+
+    cpdef bint create_index(TCTable self, char* colname, idx_type):
+        """
+        idx_type is one of:
+           's' for index on a string
+        or 'd' for index on a decimal number.
+        """
+        idx_lookup = {'s': TDBITLEXICAL, 'd': TDBITDECIMAL, 
+                      'o': TDBITOPT, 'v': TDBITVOID }
+        cdef int type = idx_lookup[idx_type]
+        return tctdbsetindex(self._state, colname, type)
 
     
     def __setitem__(self, k, dic):
@@ -260,8 +273,6 @@ cdef class TCTable(object):
     
     def __len__(self):
         return tctdbrnum(self._state)
-    #cdef uint64_t number = tctdbrnum(self._state)
-    #    return number
 
     cdef void _set_limit(TCTable self, TDBQRY* query_state, dict kwargs):
         limit = kwargs.pop('limit', None) 

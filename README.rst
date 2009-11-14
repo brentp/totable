@@ -222,21 +222,22 @@ Performance Tuning
 ==================
 Tokyo Cabinet allows you to `tune` or `optimize` a table. the available parameters are:
 
-        * `bnum` specifies the number of elements of the bucket array.
-          Suggested size of 'bnum' is about from 0.5 to 4 times of the number
-          of all records to be stored. default is about 132K.
+    * `bnum` specifies the number of elements of the bucket array.
+      Suggested size of 'bnum' is about from 0.5 to 4 times of the number
+      of all records to be stored. default is about 132K.
 
-        * `apow` specifies the size of record alignment by power of 2.
-           The default value is 4 standing for 2^4=16.
+    * `apow` specifies the size of record alignment by power of 2.
+      The default value is 4 standing for 2^4=16.
 
-        * `fpow` specifies the maximum number of elements of the free block
-          pool by power of 2. The default value is 10 standing for 2^10=1024.
+    * `fpow` specifies the maximum number of elements of the free block
+      pool by power of 2. The default value is 10 standing for 2^10=1024.
 
-        * `opts` specifies options by bitwise-or (|):
-          + 'TDBTLARGE' must be specified to use a database larger than 2GB.
-          + 'TDBTDEFLATE' use Deflate encoding.
-          + 'TDBTBZIP' use BZIP2 encoding.
-          + 'TDBTTCBS' use TCBS encoding.
+    * `opts` specifies options by bitwise-or (|):
+
+      * 'TDBTLARGE' must be specified to use a database larger than 2GB.
+      * 'TDBTDEFLATE' use Deflate encoding.
+      * 'TDBTBZIP' use BZIP2 encoding.
+      * 'TDBTTCBS' use TCBS encoding.
 
 The other parameters: `cache`_ and `mmap_size`_ are explained below.
 

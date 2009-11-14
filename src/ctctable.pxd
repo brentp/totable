@@ -103,8 +103,11 @@ cdef extern from "tctdb.h":
     uint64_t tctdbrnum (TCTDB *tdb)    # number of records in table
     bint tctdbputkeep (TCTDB *tdb, void *pkbuf, int pksiz, TCMAP *cols)
     bint tctdbiterinit(TCTDB *tdb)
+    TCMAP *tctdbiternext3(TCTDB *tdb)
     # Maps
     TCMAP *tctdbget    (TCTDB *tdb, void *pkbuf, int pksiz)
+    char *tctdbget3(TCTDB *tdb, char *pkstr)
+
     TCMAP *tcmapnew2(uint32_t bnum)
     TCMAP *tcmapnew3(char *str, ...)
     void tcmapdel      (TCMAP *map)

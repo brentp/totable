@@ -6,20 +6,20 @@ TODO
 =====
 * docstrings.
 * fix contains()
-* DONE: indexes tctdbsetindex
 * allow specifying which columns are ints/floats.
+* DONE: indexes tctdbsetindex
 * DONE: document between
 * DONE: tune/optimize.
 * DONE: document tuning params.
-* STARTED: make a class for tcmap
-* tctdbcopy (backup).
+* DONE: __iter__ tctdbiternext (needs docs)
+* faster methods that assume no \0's in the strings?
 * tctdbmetasearch
 * see: tctdbqryproc for callbacks on queries.
-* __iter__ tctdbiternext
 * benchmark.
 """
 
 cimport python_string as ps
+cimport python_list as pl
 
 DEF DEFAULT_OPTS = 0
 TDBTLARGE = 1
@@ -166,19 +166,19 @@ cdef class TCTable(object):
             self._throw('Unable to write to database '+ str(k))
 
     cdef dict _tcmap_to_dict(TCTable self, TCMAP *tcmap):
-        cdef dict d = {} 
+        cdef dict d = {}
         tcmapiterinit(tcmap) # Initialize the map iterator
         cdef char *kptr, *vptr
         cdef int ksiz, vsiz
-        while True:
-            kptr = <char *>tcmapiternext(tcmap, &ksiz) # Get one column
-            if kptr == NULL: break
+        kptr = <char *>tcmapiternext(tcmap, &ksiz)
+        while kptr != NULL:
 
             vptr = <char *>tcmapget(tcmap, <void *>kptr, ksiz, &vsiz)
 
             pykey = ps.PyString_FromStringAndSize(kptr, <Py_ssize_t>ksiz)
             pyval = ps.PyString_FromStringAndSize(vptr, <Py_ssize_t>vsiz)
             d[pykey] = pyval
+            kptr = <char *>tcmapiternext(tcmap, &ksiz)
 
         return d
 
@@ -200,6 +200,19 @@ cdef class TCTable(object):
     cdef dict _ckey_to_dict(TCTable self, char *kbuf, int ksiz):
         cdef TCMAP *tcmap = tctdbget(self._state, kbuf, <int>ksiz)
         return self._tcmap_to_dict(tcmap)
+
+    def __iter__(self):
+        tctdbiterinit(self._state)
+        return self
+
+    def __next__(self):
+        cdef TCMAP *tcmap = tctdbiternext3(self._state)
+        if tcmap == NULL:
+            raise StopIteration
+        cdef dict d = self._tcmap_to_dict(tcmap)
+        tcmapdel(tcmap)
+        # the key is stored in the tcmap with it's key as ''
+        return d.pop(''), d
 
 
     def keep_or_put(self, k, dic):
@@ -385,6 +398,7 @@ cdef class TCTable(object):
 
 cdef class Col(object):
     """
+    TODO:
     tdb.query(Col('name') == 'Fred' & Col('age') > 22)
         or
     tdb.select(Q(name__in=['Fred', 'Wilma']), Q(name__contains="at2g"))
@@ -428,7 +442,7 @@ cdef class Col(object):
         else:
             str_lookups= {
                 2: TDBQCSTREQ, # ==
-                3: TDBQCSTREQ | TDBQCNEGATE # not equal. # TODO test.
+                3: TDBQCSTREQ | TDBQCNEGATE # not equal.
             } 
             self.op = str_lookups[op]
         return self
@@ -490,11 +504,10 @@ cdef class Col(object):
         return self
 
 
-
 cdef class TCMap(object):
-    cdef TCMAP* _map
+    cdef TCMAP* _state
     def __del__(self):
-        tcmapdel(self._map)
+        tcmapdel(self._state)
 
 cdef TCMap make_tcmap():
     pass

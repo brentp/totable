@@ -147,7 +147,15 @@ class TestTCTable(unittest.TestCase):
         self.assertEquals(t['asdf'], {'d': '2'})
         t.close()
 
+    def test_iter(self):
+        t = self.table
+        self.assertEquals(len(list(t)), len(t))
 
+        k, v = iter(t).next()
+        self.assertEquals(v, t[k])
+
+        for k, v in t:
+            self.assertEquals(v, t[k])
 
     def test_optimize(self):
         from tctable import TDBTLARGE, TDBTDEFLATE, TDBTBZIP, TDBTTCBS

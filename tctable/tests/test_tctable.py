@@ -125,9 +125,29 @@ class TestTCTable(unittest.TestCase):
         from tctable import TDBTLARGE
         t = TCTable(self.path + ".tune", 'w', bnum=1234, fpow=6, opts=TDBTLARGE)
         t['asdf'] = {'d': '1'}
-        
 
         t.close()
+
+    def test_mmap_size(self):
+        t = TCTable(self.path + ".tune", 'w', mmap_size=256 * 1e6)
+        t['asdf'] = {'d': '2'}
+        self.assertEquals(t['asdf'], {'d': '2'})
+        del t['asdf']
+        t.close()
+
+    def test_cache(self):
+        t = TCTable(self.path + ".tune", 'w', rcnum=8192)
+        t['asdf'] = {'d': '2'}
+        self.assertEquals(len(t) > 0, True)
+        self.assertEquals(t['asdf'], {'d': '2'})
+
+        t.close()
+
+        t = TCTable(self.path + ".tune", 'w', lcnum=1024, ncnum=200)
+        self.assertEquals(t['asdf'], {'d': '2'})
+        t.close()
+
+
 
     def test_optimize(self):
         from tctable import TDBTLARGE, TDBTDEFLATE, TDBTBZIP, TDBTTCBS

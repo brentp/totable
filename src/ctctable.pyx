@@ -13,6 +13,9 @@ TODO
 * DONE: document tuning params.
 * STARTED: make a class for tcmap
 * tctdbcopy (backup).
+* tctdbmetasearch
+* see: tctdbqryproc for callbacks on queries.
+* __iter__ tctdbiternext
 * benchmark.
 """
 
@@ -50,15 +53,15 @@ cdef class TCTable(object):
         '''Raises a TCException, appending to *message* the last error message
         from the table database.
         '''
-        raise TCException(self._msg(message))
+        raise TCException(message + self._msg())
     
-    def _msg(self, message='Error.'):
+    cpdef _msg(TCTable self):
         '''Composes an error message for an exception, appending to the value
         of *message* the last error message from the table database.
         '''
         cdef int errorcode = tctdbecode(self._state)
-        msg = <char*>tctdberrmsg(errorcode)
-        return message + ' ' + msg.capitalize()
+        return tctdberrmsg(errorcode)
+
 
     def optimize(self, int64_t bnum=-1, int8_t apow=-1, int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS):
         if self.mode != 'w':
@@ -68,13 +71,25 @@ cdef class TCTable(object):
         if not success:
             self._throw('Unable to optimize {0}.'.format(str(self.path)))
         return success
+
     
-    def __init__(self, path, mode='r', int64_t bnum=-1, int8_t apow=-1, int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS):
+    def __cinit__(self, path, mode='r', 
+                 # tune params.
+                 int64_t bnum=-1, int8_t apow=-1, 
+                 int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS,
+                 #mmap (setxmsiz params
+                 int64_t mmap_size=-1,
+                 # cache params:
+                 int32_t rcnum=-1, int32_t lcnum=-1, int32_t ncnum=-1):
         """
         'bnum' specifies the number of elements of the bucket array. If it is not more than 0, the default value is specified. The default value is 131071. Suggested size of the bucket array is about from 0.5 to 4 times of the number of all records to be stored.
         'apow' specifies the size of record alignment by power of 2. If it is negative, the default value is specified. The default value is 4 standing for 2^4=16.
         'fpow' specifies the maximum number of elements of the free block pool by power of 2. If it is negative, the default value is specified. The default value is 10 standing for 2^10=1024.
         'opts' specifies options by bitwise-or: `TDBTLARGE' specifies that the size of the database can be larger than 2GB by using 64-bit bucket array, `TDBTDEFLATE' specifies that each record is compressed with Deflate encoding, `TDBTBZIP' specifies that each record is compressed with BZIP2 encoding, `TDBTTCBS' specifies that each record is compressed with TCBS encoding.
+        'mmap_size' is the size of mapped memory. default is 67,108,864 (64MB)
+        'rcnum' is the max number of records to be cached. default is 0
+        'lcnum' is the max number of leaf-nodes to be cached. default is 4096
+        'ncnum' is the max number of non-leaf nodes cached. default is 512
         """
         self.path = path
         self.mode = mode
@@ -84,6 +99,14 @@ cdef class TCTable(object):
             success = tctdbtune(self._state, bnum, apow, fpow, opts)
             if not success:
                 self._throw('Unable to tune {0}.'.format(str(path)))
+        if mmap_size != -1:
+            success = tctdbsetxmsiz(self._state, mmap_size)
+            if not success:
+                self._throw('Unable to set mmap size {0}.'.format(path))
+        if rcnum > -1 or lcnum > -1 or ncnum > -1: 
+            success = tctdbsetcache(self._state, rcnum, lcnum, ncnum)
+            if not success:
+                self._throw('Unable to setcache {0}.'.format(self.path))
 
         success = tctdbopen(self._state, path, 6 if mode=='w' else 1)
         if not success:
@@ -229,8 +252,7 @@ cdef class TCTable(object):
         ps.PyString_AsStringAndSize(key, &kbuf, &ksiz)
         cdef bint success = tctdbout(self._state, kbuf, ksiz)
         if not success:
-            raise KeyError(self._msg('Could not delete row "{0}".' \
-                                     .format(str(key))))
+            raise KeyError(self._msg())
     
     def pop(self, k, d=None):
         '''D.pop(k[,d]) -> v, remove specified key and return the
@@ -367,13 +389,13 @@ cdef class Col(object):
         or
     tdb.select(Q(name__in=['Fred', 'Wilma']), Q(name__contains="at2g"))
     """
-    cdef public object colname
+    cdef readonly object colname
     cdef public int op
     cdef public object other
-    cdef public dict num_lookups
-    cdef public bint invert
+    cdef readonly dict num_lookups
+    cdef readonly bint invert
 
-    def __init__(self, colname):
+    def __cinit__(self, colname):
         self.invert = False
         self.num_lookups= {
                 0: TDBQCNUMLT, # <

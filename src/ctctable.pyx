@@ -63,7 +63,8 @@ cdef class TCTable(object):
         return tctdberrmsg(errorcode)
 
 
-    def optimize(self, int64_t bnum=-1, int8_t apow=-1, int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS):
+    def optimize(self, int64_t bnum=-1, int8_t apow=-1, int8_t fpow=-1, 
+                 uint8_t opts=DEFAULT_OPTS):
         if self.mode != 'w':
             raise TCException('Unable optimize unless open with mode="w"')
 
@@ -358,9 +359,14 @@ cdef class TCTable(object):
             args.append(Col(colname) == other)
 
         for col in args:
+            # separate these out rather than |'ing here because
+            # they may reuse the Col object.
             if col.invert:
-                col.op = col.op | TDBQCNEGATE
-            tctdbqryaddcond(q._state, <char *>col.colname, <int>col.op, <char *>col.other)
+                tctdbqryaddcond(q._state, <char *>col.colname, 
+                                <int>(col.op | TDBQCNEGATE, <char *>col.other)
+            else:
+                tctdbqryaddcond(q._state, <char *>col.colname, <int>col.op, 
+                                <char *>col.other)
 
         self._set_limit(q._state, kwargs)
         self._set_order(q._state, kwargs)
@@ -380,8 +386,10 @@ cdef class TCTable(object):
         tclistdel(tclist)
         return li
 
-    cdef list _tclist_to_list(TCTable self, TCLIST *tclist, int count, bint values_only):
-        # INTERNAL: the calling function is still responsible for deleting tclist.
+    cdef list _tclist_to_list(TCTable self, TCLIST *tclist, int count, 
+                              bint values_only):
+        # INTERNAL: the calling function is still responsible for deleting
+        # tclist.
         cdef list li = []
         cdef char *kbuf
         cdef int ksiz

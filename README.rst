@@ -7,15 +7,17 @@ TCTable
 About
 -----
 
-Pythonic access to `tokyo cabinet`_ table database api. most of the `cython`_ 
-code for this is stolen from `pykesto`_.
-This library builds on that by adding the Col() query interface. e.g.
+Pythonic access to `tokyo cabinet`_ table database api. (NOTE: The 
+original `cython`_ code was from `pykesto`_.)
+The aims is to provide a simple syntax to load and query data in a table.
+Most of the work is handled by  the `Col`_ query interface. e.g.
 ::
 
     tbl.select(Col('age') > 18, Col('name').startswith('T'))
 
-to allow querying columns with numbers and letters transparently.
-Also adds a few more niceties, see below.
+to allow querying columns with numbers and letters transparently. Even
+though tokyo cabinet stores all values as strings.
+And more syntatic sugar below.
 
 Install
 -------
@@ -37,13 +39,12 @@ from a the directory containing this file:
 
 Example Use
 -----------
+Make some fake data. Note it works just like a DBM or dictionary, except
+that the values themselves are dictionaries.
 ::
 
     >>> from tctable import TCTable, Col
     >>> tbl = TCTable('doctest.tct', 'w')
-    >>> tbl, len(tbl)
-    (TCTable('doctest.tct'), 0)
-
     >>> fnames = ['fred', 'jane', 'john', 'mark', 'bill', 'ted', 'ann']
     >>> lnames = ['smith', 'cox', 'kit', 'ttt', 'zzz', 'ark', 'ddk']
     >>> for i in range(len(fnames)):
@@ -59,7 +60,7 @@ Example Use
 Col
 ===
 
-`Col`_ as sent to the select method makes it easy to do queries on a database
+`Col`_, as sent to the select method makes it easy to do queries on a database
 the format is Col(colname) == 'Fred' where colname is one of the keys in the
 dictionary items in the database. or can use kwargs to select()
 ::
@@ -120,11 +121,9 @@ use for number querying between a min and max. includes the endpoints.
 
 numeric queries (richcmp)
 *************************
-
-in TC, everything is stored as strings, but you can force
-number based comparisons by using (you guessed it) a number.
-Or using a string for non-numeric comparisons.
-
+in TC, everything is stored as strings, but you can force number based 
+comparisons with TCTable by using (you guessed it) a number. Or using 
+a string for non-numeric comparisons.
 ::
 
     >>> results = tbl.select(Col('age') > 68)
@@ -133,10 +132,8 @@ Or using a string for non-numeric comparisons.
 
 combining queries
 *****************
-
 just add multiple Col() arguments to the select() call
 and they will be essentially *and*'ed together.
-
 ::
 
     >>> results = tbl.select(Col('age') > 68, Col('age') < 72)
@@ -145,9 +142,7 @@ and they will be essentially *and*'ed together.
 
 Negate(~)
 *********
-
 for example get everything that's not a given value...
-
 ::
 
     >>> results = tbl.select(~Col('age') <= 68)
@@ -249,7 +244,9 @@ Tokyo Cabinet allows you to `tune` or `optimize` a table. the available paramete
 
     * `opts` specifies options by bitwise-or (|):
 
-      * 'TDBTLARGE' must be specified to use a database larger than 2GB.
+      * 'TDBTLARGE' must be specified to use a database larger than 2GB. 
+        (you must also specify a config flag when compiling the TC library to
+        enable this)
       * 'TDBTDEFLATE' use Deflate encoding.
       * 'TDBTBZIP' use BZIP2 encoding.
       * 'TDBTTCBS' use TCBS encoding.

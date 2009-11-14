@@ -12,7 +12,6 @@ TODO
 * DONE: tune/optimize.
 * DONE: document tuning params.
 * DONE: __iter__ tctdbiternext (needs docs)
-* faster methods that assume no \0's in the strings?
 * tctdbmetasearch
 * see: tctdbqryproc for callbacks on queries.
 * benchmark.
@@ -351,7 +350,6 @@ cdef class TCTable(object):
         cdef TCLIST *tclist
         cdef list li = []
         cdef int count
-        cdef int i
 
         kwskip = ('delete', 'order', 'count', 'limit', 'offset', 'values_only')
 
@@ -389,6 +387,7 @@ cdef class TCTable(object):
         li = self._tclist_to_list(tclist, count, values_only)
         tclistdel(tclist)
         return li
+
 
     cdef list _tclist_to_list(TCTable self, TCLIST *tclist, int count, 
                               bint values_only):
@@ -469,36 +468,20 @@ cdef class Col(object):
         self.other = pattern
         return self
 
-    def contains(self, other):
-        """
-        if other is a list and any is True
-        it will return all cases where the column is
-        one of those values. if any is False, it will return
-        only columns that match all the values in the list.
-        """
-
-        if hasattr(other, '__iter__'):
-            other = list(other)
-            if isinstance(other[0], basestring):
-                self.op = TDBQCSTROREQ # TDBQCSTRAND 
-                self.other  = ' '.join(other)
-                return self
-            else: 
-                self.op = TDBQCNUMOREQ
-                self.other  = ' '.join(map(str, other))
-
-
-        if isinstance(other, basestring):
-            # so see if the column contains string.
-            self.op = TDBQCSTRINC
-            self.other = other
-            return self
-
-        # it's a number. so extract columns with this value.
-        self.other = unicode(self.other)
-        self.op = self.num_lookups[2] # ==
+    def in_list(self, li):
+        if isinstance(li[0], basestring):
+            self.op = TDBQCSTROREQ if len(li) > 1 else TDBQCSTREQ
+        else:
+            self.op = TDBQCNUMOREQ if len(li) > 1 else TDBQCNUMEQ
+            li = map(str, li)
+        self.other = ' '.join(li)
         return self
 
+    def like(self, other):
+        assert isinstance(other, basestring)
+        self.op = TDBQCSTRINC
+        self.other = other
+        return self
 
     def startswith(self, other):
         self.other = other

@@ -86,13 +86,28 @@ endswith
     >>> [d['fname'] + ' ' + d['lname'] for k, d in results]
     ['jane ark']
 
-contains
-********
-this is still in flux (can takes lists of numbers or strings as well)
+like
+****
+this works like an sql query with '%' on either end. (dont attach those
+values to the query!). so to get everyone with and 'e' in their firstname...
 ::
 
-    >> results = tbl.select(Col('fname').contains('e'))
+    >>> r = tbl.select(Col('fname').like('e'))
+    >>> sorted(set([v['fname'] for k, v in r]))
+    ['fred', 'jane', 'ted']
+
+in_list
+*******
+return row that exactly match *1* of the values in the list.
+::
+
+    >>> r = tbl.select(Col('fname').in_list(['ted', 'fred']))
+    >>> sorted(set([v['fname'] for k, v in r]))
     ['fred', 'ted']
+
+    >>> r = tbl.select(Col('age').in_list([20, 70]))
+    >>> sorted(set([v['age'] for k, v in r]))
+    ['20', '70']
 
 between
 *******

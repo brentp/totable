@@ -94,23 +94,24 @@ class TestTCTable(unittest.TestCase):
         r = t.select(Col('age') == 180, Col('name') == 'Chopin')
         self.assertEquals(r, [('Frederic', {'type': 'person', 'age': '180', 'profession': 'composer', 'name': 'Chopin'})])
 
-    def test_contains(self):
+    def test_inlist(self):
         t = self.table
-
-        r = t.select(Col('name').contains('an'))
-        self.assertEquals([v['name'] for k, v in r], ['Schumann', 'Florestan'])
-
-    def test_contains_list(self):
-        t = self.table
-        # lists have to match exactly.
-        r = t.select(Col('name').contains(['Chopin']))
+        test_names = ['Chopin', 'Florestan']
+        r = t.select(Col('name').in_list(test_names))
         names = self.get_cols(r)
-        self.assertEquals(names, ['Chopin'])
+        self.assertEquals(names, test_names)
 
-        r = t.select(Col('name').contains(['Chopin', 'Schumann']))
+        test_ages = [33, 100]
+        r = t.select(Col('age').in_list(test_ages))
+        ages = map(int, self.get_cols(r, 'age'))
+        self.assertEquals(sorted(set(ages)), test_ages)
 
-        names = sorted(self.get_cols(r))
-        self.assertEquals(names, ['Chopin', 'Schumann'])
+
+    def test_like(self):
+        t = self.table
+
+        r = t.select(Col('name').like('an'))
+        self.assertEquals([v['name'] for k, v in r], ['Schumann', 'Florestan'])
 
     def test_matches(self):
         t = self.table
@@ -200,11 +201,11 @@ class TestTCTable(unittest.TestCase):
 
     def test_combined(self):
         t = self.table
-        r = t.select(Col('age').between(180, 220), Col('name').contains('an'))
+        r = t.select(Col('age').between(180, 220), Col('name').like('an'))
         self.assertEquals(r, [('Robert', {'type': 'person', 'age': '180', 'profession': 'composer', 'name': 'Schumann'})], r)
 
         r = t.select(Col('age').between(180, 220), 
-                     Col('name').contains('an'),
+                     Col('name').like('an'),
                      Col('type') == 'dog'
                     )
         self.assertEquals(r, [])

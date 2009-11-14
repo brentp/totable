@@ -121,17 +121,17 @@ cdef class TCTable(object):
             tctdbdel(self._state)
             self._state = NULL
 
-    cdef TCMAP* _dict_to_tcmap(self, dict dic):
+    cdef TCMAP* _dict_to_tcmap(self, dict d):
         """INTERNAL: take a dict and return the tcmap which must
         be deleted with tcmapdel(tcmap)
         """
         cdef char *kbuf, *vbuf
         cdef Py_ssize_t ksiz, vsiz
         cdef TCMAP *tcmap
-        cdef int ld = len(dic)
+        cdef int ld = len(d)
         tcmap = tcmapnew2(ld)
 
-        for key, val in dic.items():
+        for key, val in d.items():
             ps.PyString_AsStringAndSize(key, &kbuf, &ksiz)
             ps.PyString_AsStringAndSize(val, &vbuf, &vsiz)
             tcmapput(tcmap, kbuf, ksiz, vbuf, vsiz)
@@ -154,8 +154,8 @@ cdef class TCTable(object):
         return tctdbsetindex(self._state, colname, type)
 
     
-    def __setitem__(self, k, dic):
-        cdef TCMAP * tcmap = self._dict_to_tcmap(dic)
+    def __setitem__(self, k, d):
+        cdef TCMAP * tcmap = self._dict_to_tcmap(d)
         cdef char *kbuf
         cdef Py_ssize_t ksiz
         cdef bint success
@@ -194,13 +194,15 @@ cdef class TCTable(object):
         if tcmap == NULL:
             raise KeyError('Lookup failed: ' + str(key))
 
-        cdef dict dic = self._tcmap_to_dict(tcmap)
+        cdef dict d = self._tcmap_to_dict(tcmap)
         tcmapdel(tcmap)
-        return dic
+        return d
 
-    cdef dict _ckey_to_dict(TCTable self, char *kbuf, int ksiz):
+    cdef inline dict _ckey_to_dict(TCTable self, char *kbuf, int ksiz):
         cdef TCMAP *tcmap = tctdbget(self._state, kbuf, <int>ksiz)
-        d = self._tcmap_to_dict(tcmap)
+        if tcmap == NULL:
+            raise KeyError('Lookup failed: ' + str(kbuf))
+        cdef dict d = self._tcmap_to_dict(tcmap)
         tcmapdel(tcmap)
         return d
 
@@ -218,7 +220,7 @@ cdef class TCTable(object):
         return d.pop(''), d
 
 
-    def keep_or_put(self, k, dic):
+    def keep_or_put(self, k, d):
         '''Takes as arguments a key (string) and a value (dict).
         If the key already exists in the table, nothing is done
         and the string 'keep' is returned.
@@ -227,7 +229,7 @@ cdef class TCTable(object):
         cdef char *kbuf
         cdef Py_ssize_t ksiz
         ps.PyString_AsStringAndSize(k, &kbuf, &ksiz)
-        cdef TCMAP * tcmap = self._dict_to_tcmap(dic)
+        cdef TCMAP * tcmap = self._dict_to_tcmap(d)
         cdef bint success = tctdbputkeep(self._state, <void *>kbuf, 
                                           <int>ksiz, tcmap)
 
@@ -242,14 +244,14 @@ cdef class TCTable(object):
                 self._throw('Unable to write key "{0}".'.format(str(k)))
         return 'put'
     
-    def setdefault(self, k, dic):
-        '''Writes a record -- d[k] = dic -- if k not in d.
+    def setdefault(self, k, d):
+        '''Writes a record -- d[k] = d -- if k not in d.
         Then returns d[k].
         '''
-        if self.keep_or_put(k, dic) == 'keep':
-            return self.get(k, dic)
+        if self.keep_or_put(k, d) == 'keep':
+            return self.get(k, d)
         else:
-            return dic # which certainly has just been put
+            return d # which certainly has just been put
     
     def __getitem__(self, key):
         '''Returns a record (as a dict) or raises KeyError.'''
@@ -300,7 +302,7 @@ cdef class TCTable(object):
     def __contains__(self, key):
         '''True if D has a key *key*, else False.
         But know that calling D.get(id, defaultdict) is cheaper than
-            dic = D[id] if id in D else defaultdict
+            d = D[id] if id in D else defaultdict
         '''
         return self.size_of(key) > -1
     
@@ -394,7 +396,7 @@ cdef class TCTable(object):
         # tclist.
         cdef list li = []
         cdef char *kbuf
-        cdef int ksiz
+        cdef int ksiz, i
         cdef dict d
         for i in range(count):
             kbuf = <char *>tclistval(tclist, i, &ksiz)

@@ -106,6 +106,17 @@ class TestTCTable(unittest.TestCase):
         ages = map(int, self.get_cols(r, 'age'))
         self.assertEquals(sorted(set(ages)), test_ages)
 
+    def test_put(self):
+        t = self.table
+        t.put('a', {'a': '1'}, mode='p')
+        self.assertEquals(t.put('a', {'a': '2'}, mode='k'), 'keep')
+        self.assertEquals(t['a'], {'a': '1'})
+
+        self.assertEquals(t.put('b', {'a': '3'}, mode='k'), 'put')
+
+        t.put('a', {'b': '99'}, 'c')
+        self.assertEquals(t['a'], {'a': '1', 'b': '99'})
+
 
     def test_like(self):
         t = self.table

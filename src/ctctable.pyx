@@ -5,13 +5,13 @@
 TODO
 =====
 * docstrings.
-* fix contains()
 * allow specifying which columns are ints/floats.
+* DONE: fix contains()
 * DONE: indexes tctdbsetindex
 * DONE: document between
 * DONE: tune/optimize.
 * DONE: document tuning params.
-* DONE: __iter__ tctdbiternext (needs docs)
+* DONE: __iter__ tctdbiternext.
 * tctdbmetasearch
 * see: tctdbqryproc for callbacks on queries.
 * benchmark.
@@ -152,6 +152,35 @@ cdef class TCTable(object):
         cdef int type = idx_lookup[idx_type]
         return tctdbsetindex(self._state, colname, type)
 
+    def put(TCTable self, k, dict d, mode='p'):
+        """ mode is one of p, k, c
+        'c' is put cat, which adds items to an existing dict.
+        'p' is put just writes to the key without regard for what's there
+        'k' will only put the new data if there is nothing currently at
+            that key.
+        """
+
+        cdef TCMAP * tcmap = self._dict_to_tcmap(d)
+        cdef char *kbuf
+        cdef Py_ssize_t ksiz
+        cdef bint success 
+        ps.PyString_AsStringAndSize(k, &kbuf, &ksiz)
+        if mode == 'c':
+            success = tctdbputcat(self._state, kbuf, <int>ksiz, tcmap)
+            if not success:
+                if not k in d:
+                    self._throw('Error: attempting to add to '\
+                            'non-existing key: %s' % k)
+        elif mode == 'p':
+            success = tctdbput(self._state, kbuf, <int>ksiz, tcmap)
+            if not success:
+                self._throw('error in put ' + k + ' ' + str(d))
+        elif mode == 'k':
+            success = tctdbputkeep(self._state, kbuf, ksiz, tcmap)
+            return self._put_keep_code(success, k)
+        else:
+            raise TCException('mode must be one of p/k/c')
+
     
     def __setitem__(self, k, d):
         cdef TCMAP * tcmap = self._dict_to_tcmap(d)
@@ -163,7 +192,7 @@ cdef class TCTable(object):
         tcmapdel(tcmap)
 
         if not success:
-            self._throw('Unable to write to database '+ str(k))
+            self._throw('Unable to write to '+ str(k))
 
     cdef dict _tcmap_to_dict(TCTable self, TCMAP *tcmap):
         cdef dict d = {}
@@ -233,14 +262,16 @@ cdef class TCTable(object):
                                           <int>ksiz, tcmap)
 
         tcmapdel(tcmap)
-        # according to http://1978th.net/tokyocabinet/spex-en.html
+        return self._put_keep_code(success, k)
+
+    cdef _put_keep_code(self, bint success, key):
         cdef int errorcode
         if not success:
             errorcode = tctdbecode(self._state)
             if errorcode == 21: # 'existing record'
                 return 'keep'
             else:
-                self._throw('Unable to write key "{0}".'.format(str(k)))
+                self._throw('Unable to write key "{0}".'.format(key))
         return 'put'
     
     def setdefault(self, k, d):

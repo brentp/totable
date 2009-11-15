@@ -98,6 +98,7 @@ cdef extern from "tctdb.h":
     bint tctdbclose   (TCTDB *tdb)
     bint tctdbsync    (TCTDB *tdb) # flush
     bint  tctdbput    (TCTDB *tdb, void *pkbuf, int pksiz, TCMAP *cols)
+    bint  tctdbputcat (TCTDB *tdb, void *pkbuf, int pksiz, TCMAP *cols)
     bint  tctdbout    (TCTDB *tdb, void *pkbuf, int pksiz) # deletes a row
     int   tctdbvsiz    (TCTDB *tdb, void *pkbuf, int pksiz) # row size
     uint64_t tctdbrnum (TCTDB *tdb)    # number of records in table

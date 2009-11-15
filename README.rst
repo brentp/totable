@@ -228,6 +228,24 @@ delete as expected for a dictionary interface.
     >>> print tbl.get('weird')
     None
 
+
+put
+===
+encapsulates put, putkeep and putcat with a mode kwarg that takes
+'p' or 'k' or 'c' respectively.
+::
+
+    >>> tbl.put('a', {'a': '1'}, mode='p')
+    >>> tbl.put('a', {'a': '2'}, mode='k')
+    'keep'
+    >>> assert tbl['a'] == {'a': '1'}
+
+    >>> tbl.put('b', {'a': '3'}, mode='k')
+    'put'
+
+    >>> tbl.put('a', {'b': '99'}, 'c')
+    >>> assert tbl['a'] == {'a': '1', 'b': '99'}
+
 Performance Tuning
 ==================
 Tokyo Cabinet allows you to `tune` or `optimize` a table. the available parameters are:

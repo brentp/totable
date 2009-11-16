@@ -356,6 +356,20 @@ cdef class TCTable(object):
         if offset is None: offset = 0
         tctdbqrysetlimit(query_state, <int>limit, <int>offset)
 
+    cdef void _set_callback(TCTable self, TDBQRY *query_state, dict kwargs):
+        if not 'callback' in kwargs: return 
+        pycallback = kwargs['callback']
+        """
+        def pycallback(key, value):
+            return key, value
+        """
+        tctdbqryproc(query_state, self.get_proc(<void *>pycallback), NULL)
+
+    cdef TDBQRYPROC get_proc(self, void * pycallback):
+        # shrug.
+        # cython/Demos/callback/cheese.pyx
+        pass
+
     cdef void _set_order(TCTable self, TDBQRY* query_state, dict kwargs):
         if not 'order' in kwargs: return
         # TODO: handle nums. NUMASC, NUMDESC how?
@@ -386,7 +400,7 @@ cdef class TCTable(object):
         cdef list li = []
         cdef int count
 
-        kwskip = ('delete', 'order', 'count', 'limit', 'offset', 'values_only')
+        kwskip = ('delete', 'order', 'count', 'limit', 'offset', 'values_only', 'callback')
 
         # tbl.select(name='fred', age=22)
         # convert age=22 to Col('age') == 22
@@ -407,6 +421,7 @@ cdef class TCTable(object):
 
         self._set_limit(q._state, kwargs)
         self._set_order(q._state, kwargs)
+        self._set_callback(q._state, kwargs)
             
         if 'delete' in kwargs:
             return tctdbqrysearchout(q._state)

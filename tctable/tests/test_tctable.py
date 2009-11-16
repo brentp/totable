@@ -134,8 +134,8 @@ class TestTCTable(unittest.TestCase):
         self.assertEquals(self.get_cols(r), ['Beethoven', 'Florestan'])
 
     def test_tune(self):
-        from tctable import TDBTLARGE
-        t = TCTable(self.path + ".tune", 'w', bnum=1234, fpow=6, opts=TDBTLARGE)
+        from tctable import TDBTTCBS
+        t = TCTable(self.path + ".tune", 'w', bnum=1234, fpow=6, opts=TDBTTCBS)
         t['asdf'] = {'d': '1'}
 
         t.close()
@@ -180,7 +180,7 @@ class TestTCTable(unittest.TestCase):
         t.optimize(bnum=208000)
         t.optimize(opts=TDBTBZIP)
         t.optimize(opts=TDBTDEFLATE)
-        t.optimize(opts=TDBTLARGE | TDBTTCBS)
+        t.optimize(opts=TDBTTCBS)
         t.close()
 
 

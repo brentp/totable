@@ -9,24 +9,13 @@ cdef extern from "tctdb.h":
     ctypedef struct TDBIDX:
         pass
     ctypedef struct TCTDB:
-        void *mmtx
-        #TCHDB *hdb
-        bint open
-        bint wmode
-        uint8_t opts
-        int32_t lcnum
-        int32_t ncnum
-        #TDBIDX *idxs
-        int   inum
-        bint tran
+        pass
 
 
     cdef enum:
         TDBITLEXICAL # 's'
         TDBITDECIMAL # 'd'
         # TODO qgram stuff for FTS
-        
-
         TDBITOPT = 9998 # 'o'
         TDBITVOID = 9999 # 'v'
 
@@ -56,29 +45,14 @@ cdef extern from "tctdb.h":
         TDBQONUMASC
         TDBQONUMDESC
     ctypedef struct TCLISTDATUM: # type of structure for an element of a list */
-        char *ptr            # pointer to the region */
-        int size      # size of the effective region */
+        pass
     ctypedef struct TCLIST: # type of structure for an array list */
-        TCLISTDATUM *array  # array of data */
-        int anum            # number of the elements of the array */
-        int start           # start index of used elements */
-        int num             # number of used elements */
+        pass
     ctypedef struct TCMAPREC:       # an element of a map
-        int ksiz          # size of the region of the key
-        int vsiz          # size of the region of the value
-        unsigned int hash # second hash value
-        TCMAPREC *left    # pointer to the left child
-        TCMAPREC *right   # pointer to the right child
-        TCMAPREC *prev    # pointer to the previous element
-        TCMAPREC *next
+        pass
     ctypedef struct TCMAP: # represents a table row
-        TCMAPREC **buckets # bucket array
-        TCMAPREC *first    # pointer to the first element
-        TCMAPREC *last     # pointer to the last element
-        TCMAPREC *cur      # pointer to the current element
-        uint32_t bnum      # number of buckets
-        uint64_t rnum      # number of records
-        uint64_t msiz      # total size of records
+        pass
+
     int tctdbstrtoindextype(char *str)
     char *tctdberrmsg      (int ecode)
     TCTDB *tctdbnew    ()
@@ -136,3 +110,18 @@ cdef extern from "tctdb.h":
     int  tclistnum  (TCLIST *list)
     void *tclistval (TCLIST *list, int index, int *sp)
     char *tclistval2(TCLIST *list, int index)
+
+    # callbacks:
+    #ctypedef struct TDBQRYPROC:
+        #pass
+    ctypedef int (*TDBQRYPROC)(void *pkbuf, int pksiz, TCMAP *cols, void *op)
+    bint tctdbqryproc(TDBQRY *qry, TDBQRYPROC proc, void *op)
+    #type of the pointer to a iterator function for each table record.
+    #`pkbuf' specifies the pointer to the region of the primary key.
+    #`pksiz' specifies the size of the region of the primary key.
+    #`cols' specifies a map object containing columns.
+    #`op' specifies the pointer to the optional opaque object.
+    #The return value is flags of the post treatment by bitwise-or: `TDBQPPUT' to modify the
+    #record, `TDBQPOUT' to remove the record, `TDBQPSTOP' to stop the iteration. */
+    
+

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from tctable import TCTable, Col
+from tctable import TCTable, Col, transaction
 import os
 
 def rm(path):
@@ -197,6 +197,33 @@ class TestTCTable(unittest.TestCase):
         t = self.table
         r = t.select(Col('age').between(180, 220))
         self.assertEquals([v['age'] for k, v in r], ['220', '180', '180'])
+
+    def test_clear(self):
+        t = self.table
+        self.assertEquals(len(t) > 0, True)
+        t.clear()
+        self.assertEquals(len(t), 0)
+        t.close()
+        self.setUp()
+
+
+    def test_transaction(self):
+        t = self.table
+
+        try:
+            with transaction(t):
+                t['otherwise_inserted'] = {'a': '2'}
+                t['asdf'] = 2 # error because it's not a dict.
+        except:
+            pass
+        self.assert_(not 'otherwise_inserted' in t)
+
+        with transaction(t):
+            t['bbb'] = {'a': '2'}
+
+        self.assert_('bbb' in t)
+
+
 
     def test_limit(self):
         t = self.table

@@ -105,6 +105,12 @@ cdef extern from "tctdb.h":
     bint tctdbputkeep (TCTDB *tdb, void *pkbuf, int pksiz, TCMAP *cols)
     bint tctdbiterinit(TCTDB *tdb)
     TCMAP *tctdbiternext3(TCTDB *tdb)
+    bint tctdbtranbegin(TCTDB *tdb)
+    bint tctdbtrancommit(TCTDB *tdb)
+    bint tctdbtranabort(TCTDB *tdb)
+    
+
+    bint tctdbvanish(TCTDB *tdb)
     # Maps
     TCMAP *tctdbget    (TCTDB *tdb, void *pkbuf, int pksiz)
     char *tctdbget3(TCTDB *tdb, char *pkstr)

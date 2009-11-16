@@ -338,6 +338,31 @@ create or delete a 's'tring or 'd'ecimal index on a column for faster queries.
     >>> tbl.optimize_index('age')
     True
 
+clear
+=====
+remove all records from the db.
+::
+
+    >>> len(tbl)
+    16
+    >>> tbl.clear()
+    >>> len(tbl)
+    0
+
+transaction
+===========
+do stuff in a transaction. a rollback() is performed on any exceptions.
+::
+
+    >>> try:
+    ...     with transaction(tbl):
+    ...         tbl['zzz'] = {'a': '4'}
+    ...         1/0
+    ... except: pass
+
+    >>> 'zzz' in tbl
+    False
+
 
 See Also
 --------

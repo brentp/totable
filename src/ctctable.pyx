@@ -69,9 +69,13 @@ cdef class TCTable(object):
 
         cdef bint success = tctdboptimize(self._state, bnum, apow, fpow, opts)
         if not success:
-            self._throw('Unable to optimize {0}.'.format(str(self.path)))
+            self._throw('Unable to optimize {0}.'.format(self.path))
         return success
 
+    def clear(self):
+        cdef bint success = tctdbvanish(self._state)
+        if not success:
+            self._throw('Unable clear {0}'.format(self.path))
     
     def __cinit__(self, path, mode='r', 
                  # tune params.
@@ -528,6 +532,23 @@ cdef class Col(object):
         self.other = str(low) + ' ' + str(high)
         self.op = TDBQCNUMBT
         return self
+
+cdef class transaction(object):
+    cdef TCTable table
+    def __init__(self, TCTable t):
+        self.table = t
+
+    def __enter__(self):
+        cdef bint success = tctdbtranbegin(self.table._state)
+        if not success:
+            self.table._throw()
+    
+    def __exit__(self, type, value, exc):
+        cdef bint success
+        if exc is None:
+            success = tctdbtrancommit(self.table._state)
+        else:
+            success = tctdbtranabort(self.table._state)
 
 
 cdef class TCMap(object):

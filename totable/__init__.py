@@ -1,8 +1,8 @@
 """
-    >>> from tctable import TCTable, Col
-    >>> tbl = TCTable('doctest.tct', 'w')
+    >>> from totable import ToTable, Col
+    >>> tbl = ToTable('doctest.tct', 'w')
     >>> tbl, len(tbl)
-    (TCTable('doctest.tct'), 0)
+    (ToTable('doctest.tct'), 0)
 
 make some fake data
     >>> fnames = ['fred', 'jane', 'john', 'mark', 'bill', 'ted', 'ann']
@@ -100,7 +100,7 @@ since it's schemaless, you can add anything:
 
     >>> import os; os.unlink('doctest.tct')
 """
-from ctctable import TCTable, Col, TCException, transaction, \
+from ctotable import ToTable, Col, TCException, transaction, \
     TDBTLARGE, TDBTDEFLATE, TDBTBZIP, TDBTTCBS, TDBTEXCODEC
 
 

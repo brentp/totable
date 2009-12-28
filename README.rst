@@ -1,5 +1,5 @@
 +++++++
-TCTable
+ToTable
 +++++++
 
 .. contents ::
@@ -27,11 +27,11 @@ from a the directory containing this file:
 
 
     # requires cython for now.
-    $ cython src/ctctable.pyx
+    $ cython src/ctotable.pyx
     $ python setup.py build_ext -i
 
     # test 
-    $ PYTHONPATH=. python tctable/tests/test_tctable.py
+    $ PYTHONPATH=. python totable/tests/test_totable.py
 
     # install
     $ sudo python setup.py install
@@ -43,8 +43,8 @@ Make some fake data. Note it works just like a DBM or dictionary, except
 that the values themselves are dictionaries.
 ::
 
-    >>> from tctable import TCTable, Col
-    >>> tbl = TCTable('doctest.tct', 'w')
+    >>> from totable import ToTable, Col
+    >>> tbl = ToTable('doctest.tct', 'w')
     >>> fnames = ['fred', 'jane', 'john', 'mark', 'bill', 'ted', 'ann']
     >>> lnames = ['smith', 'cox', 'kit', 'ttt', 'zzz', 'ark', 'ddk']
     >>> for i in range(len(fnames)):
@@ -122,7 +122,7 @@ use for number querying between a min and max. includes the endpoints.
 numeric queries (richcmp)
 *************************
 in TC, everything is stored as strings, but you can force number based 
-comparisons with TCTable by using (you guessed it) a number. Or using 
+comparisons with ToTable by using (you guessed it) a number. Or using 
 a string for non-numeric comparisons.
 ::
 
@@ -276,9 +276,9 @@ tune
 The arguments can be sent to the constructor.
 ::
 
-    >>> import tctable
-    >>> t = TCTable("some.tct", 'w', bnum=1234, fpow=6, \
-    ...                    opts=tctable.TDBTLARGE | tctable.TDBTBZIP)
+    >>> import totable
+    >>> t = ToTable("some.tct", 'w', bnum=1234, fpow=6, \
+    ...                    opts=totable.TDBTLARGE | totable.TDBTBZIP)
 
     >>> t.close()
 
@@ -289,7 +289,7 @@ specified, it will automatically adjust 'bnum' (only) according to the number
 of elements in the table.
 ::
 
-    >>> t = TCTable("some.tct", 'w')
+    >>> t = ToTable("some.tct", 'w')
 
     # ... add some records ...
     >>> t.optimize()
@@ -302,7 +302,7 @@ set in the constructor. this is `xmsiz` in TC parlance.
 ::
 
     >>> t.close()
-    >>> t = TCTable("some.tct", 'w', mmap_size=128 * 1e6) # ~128MB.
+    >>> t = ToTable("some.tct", 'w', mmap_size=128 * 1e6) # ~128MB.
 
 cache
 *****
@@ -314,7 +314,7 @@ these also must be set in the constructor.
 ::
 
     >>> t.close()
-    >>> t = TCTable("some.tct", 'w', rcnum=1e7, lcnum=32768)
+    >>> t = ToTable("some.tct", 'w', rcnum=1e7, lcnum=32768)
 
 
 index
@@ -383,6 +383,6 @@ See Also
 .. _`tokyo cabinet`: http://1978th.net/tokyocabinet/
 .. _`tc`: http://github.com/rsms/tc
 .. _`cython`: http://cython.org/
-.. _`ctcable.pyx`: http://github.com/brentp/tctable/blob/master/src/ctctable.pyx
+.. _`ctcable.pyx`: http://github.com/brentp/totable/blob/master/src/ctotable.pyx
 .. _`source`: http://sourceforge.net/projects/tokyocabinet/files/
 

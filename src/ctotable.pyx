@@ -34,7 +34,7 @@ __version__ = '0.1.1'
 class TCException(Exception):
     '''An error communicating with the Tokyo Cabinet database.'''
 
-cdef class TCTable(object):
+cdef class ToTable(object):
     """A Tokyo Cabinet table database.
     
     `path` is the path to the database file to be opened.
@@ -54,7 +54,7 @@ cdef class TCTable(object):
         '''
         raise TCException(message + self._msg())
     
-    cpdef _msg(TCTable self):
+    cpdef _msg(ToTable self):
         '''Composes an error message for an exception, appending to the value
         of *message* the last error message from the table database.
         '''
@@ -145,7 +145,7 @@ cdef class TCTable(object):
     def delete_index(self, colname):
         return self.create_index(colname, 'v')
 
-    cpdef bint create_index(TCTable self, char* colname, idx_type):
+    cpdef bint create_index(ToTable self, char* colname, idx_type):
         """
         idx_type is one of:
            's' for index on a string
@@ -156,7 +156,7 @@ cdef class TCTable(object):
         cdef int type = idx_lookup[idx_type]
         return tctdbsetindex(self._state, colname, type)
 
-    def put(TCTable self, k, dict d, mode='p'):
+    def put(ToTable self, k, dict d, mode='p'):
         """ mode is one of p, k, c
         'c' is put cat, which adds items to an existing dict.
         'p' is put just writes to the key without regard for what's there
@@ -198,7 +198,7 @@ cdef class TCTable(object):
         if not success:
             self._throw('Unable to write to '+ str(k))
 
-    cdef dict _tcmap_to_dict(TCTable self, TCMAP *tcmap):
+    cdef dict _tcmap_to_dict(ToTable self, TCMAP *tcmap):
         cdef dict d = {}
         tcmapiterinit(tcmap)
         cdef int ksiz, vsiz
@@ -216,7 +216,7 @@ cdef class TCTable(object):
         return d
 
 
-    cdef dict _key_to_dict(TCTable self, key):
+    cdef dict _key_to_dict(ToTable self, key):
         """INTERNAL: take the database key and return
         the dicitonary associated with that key"""
         cdef char *kbuf
@@ -230,7 +230,7 @@ cdef class TCTable(object):
         tcmapdel(tcmap)
         return d
 
-    cdef inline dict _ckey_to_dict(TCTable self, char *kbuf, int ksiz):
+    cdef inline dict _ckey_to_dict(ToTable self, char *kbuf, int ksiz):
         cdef TCMAP *tcmap = tctdbget(self._state, kbuf, <int>ksiz)
         if tcmap == NULL:
             raise KeyError('Lookup failed: ' + str(kbuf))
@@ -348,7 +348,7 @@ cdef class TCTable(object):
     def __len__(self):
         return tctdbrnum(self._state)
 
-    cdef void _set_limit(TCTable self, TDBQRY* query_state, dict kwargs):
+    cdef void _set_limit(ToTable self, TDBQRY* query_state, dict kwargs):
         limit = kwargs.pop('limit', None) 
         offset = kwargs.pop('offset', None)
         if (limit is None and offset is None): return
@@ -356,7 +356,7 @@ cdef class TCTable(object):
         if offset is None: offset = 0
         tctdbqrysetlimit(query_state, <int>limit, <int>offset)
 
-    cdef void _set_callback(TCTable self, TDBQRY *query_state, dict kwargs):
+    cdef void _set_callback(ToTable self, TDBQRY *query_state, dict kwargs):
         if not 'callback' in kwargs: return 
         pycallback = kwargs['callback']
         """
@@ -370,7 +370,7 @@ cdef class TCTable(object):
         # cython/Demos/callback/cheese.pyx
         pass
 
-    cdef void _set_order(TCTable self, TDBQRY* query_state, dict kwargs):
+    cdef void _set_order(ToTable self, TDBQRY* query_state, dict kwargs):
         if not 'order' in kwargs: return
         # TODO: handle nums. NUMASC, NUMDESC how?
         #"order='+name' or order='-name'
@@ -439,7 +439,7 @@ cdef class TCTable(object):
         return li
 
 
-    cdef list _tclist_to_list(TCTable self, TCLIST *tclist, int count, 
+    cdef list _tclist_to_list(ToTable self, TCLIST *tclist, int count, 
                               bint values_only):
         # INTERNAL: the calling function is still responsible for deleting
         # tclist.
@@ -549,8 +549,8 @@ cdef class Col(object):
         return self
 
 cdef class transaction(object):
-    cdef TCTable table
-    def __init__(self, TCTable t):
+    cdef ToTable table
+    def __init__(self, ToTable t):
         self.table = t
 
     def __enter__(self):

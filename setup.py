@@ -5,16 +5,16 @@ from distutils.core import setup
 from distutils.extension import Extension
 import os, sys
 
-if not os.path.exists('src/ctctable.c'):
-    print "run cython src/ctctable.c"
+if not os.path.exists('src/ctotable.c'):
+    print "run cython src/ctotable.c"
     sys.exit()
 
 setup(
-    ext_modules = [Extension("ctctable", ["src/ctctable.c"],
+    ext_modules = [Extension("ctotable", ["src/ctotable.c"],
                              libraries=['tokyocabinet'],
                             )
                   ],
-    name = 'tctable',
+    name = 'totable',
     version = '0.0.1',
     description = 'Cython wrapper for tokyo cabinet table',
     long_description = open('README.rst').read(),
@@ -28,6 +28,6 @@ setup(
                     'Programming Language :: C',
                     'Topic :: Database :: Database Engines/Servers',
                    ],
-    package_dir = {'': 'tctable'},
-    packages = ['tctable'],
+    package_dir = {'': 'totable'},
+    packages = ['totable'],
 )

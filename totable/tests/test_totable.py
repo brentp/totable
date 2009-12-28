@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from tctable import TCTable, Col, transaction
+from totable import ToTable, Col, transaction
 import os
 
 def rm(path):
@@ -13,11 +13,11 @@ def rm(path):
 
 PATH = "TEST.tct"
 
-class TestTCTable(unittest.TestCase):
+class TestToTable(unittest.TestCase):
     def setUp(self):
         self.path = PATH
         rm(self.path)
-        self.table = table = TCTable(self.path, 'w')
+        self.table = table = ToTable(self.path, 'w')
         table['Ludwig'] = dict(name='Beethoven', age='220', type='person',
                                profession='composer')
         table['Robert'] = dict(name='Schumann', age='180', type='person',
@@ -134,28 +134,28 @@ class TestTCTable(unittest.TestCase):
         self.assertEquals(self.get_cols(r), ['Beethoven', 'Florestan'])
 
     def test_tune(self):
-        from tctable import TDBTTCBS
-        t = TCTable(self.path + ".tune", 'w', bnum=1234, fpow=6, opts=TDBTTCBS)
+        from totable import TDBTTCBS
+        t = ToTable(self.path + ".tune", 'w', bnum=1234, fpow=6, opts=TDBTTCBS)
         t['asdf'] = {'d': '1'}
 
         t.close()
 
     def test_mmap_size(self):
-        t = TCTable(self.path + ".tune", 'w', mmap_size=256 * 1e6)
+        t = ToTable(self.path + ".tune", 'w', mmap_size=256 * 1e6)
         t['asdf'] = {'d': '2'}
         self.assertEquals(t['asdf'], {'d': '2'})
         del t['asdf']
         t.close()
 
     def test_cache(self):
-        t = TCTable(self.path + ".tune", 'w', rcnum=8192)
+        t = ToTable(self.path + ".tune", 'w', rcnum=8192)
         t['asdf'] = {'d': '2'}
         self.assertEquals(len(t) > 0, True)
         self.assertEquals(t['asdf'], {'d': '2'})
 
         t.close()
 
-        t = TCTable(self.path + ".tune", 'w', lcnum=1024, ncnum=200)
+        t = ToTable(self.path + ".tune", 'w', lcnum=1024, ncnum=200)
         self.assertEquals(t['asdf'], {'d': '2'})
         t.close()
 
@@ -170,8 +170,8 @@ class TestTCTable(unittest.TestCase):
             self.assertEquals(v, t[k])
 
     def test_optimize(self):
-        from tctable import TDBTLARGE, TDBTDEFLATE, TDBTBZIP, TDBTTCBS
-        t = TCTable(self.path + ".tune", 'w')
+        from totable import TDBTLARGE, TDBTDEFLATE, TDBTBZIP, TDBTTCBS
+        t = ToTable(self.path + ".tune", 'w')
 
         t.optimize()
 

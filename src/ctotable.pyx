@@ -77,7 +77,7 @@ cdef class ToTable(object):
         if not success:
             self._throw('Unable clear {0}'.format(self.path))
     
-    def __cinit__(self, path, mode='r', 
+    def __cinit__(self, path, mode='r',
                  # tune params.
                  int64_t bnum=-1, int8_t apow=-1, 
                  int8_t fpow=-1, uint8_t opts=DEFAULT_OPTS,

@@ -114,7 +114,7 @@ cdef class ToTable(object):
 
         success = tctdbopen(self._state, path, 6 if mode=='w' else 1)
         if not success:
-            self._throw('Unable to open {0} for {1}.'.format(str(path)))
+            self._throw('Unable to open %s' % (str(path), ))
     
     def close(self):
         '''Closes the database file and cleans memory, rendering this

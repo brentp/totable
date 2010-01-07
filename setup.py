@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+from setuptools import setup
 from distutils.extension import Extension
 import os, sys
 
@@ -15,7 +15,7 @@ setup(
                             )
                   ],
     name = 'totable',
-    version = '0.0.1',
+    version = '0.1',
     author = 'brentp',
     author_email = 'bpederse@gmail.com',
     description = 'Cython wrapper for tokyo cabinet table',

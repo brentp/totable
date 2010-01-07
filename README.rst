@@ -7,6 +7,8 @@ ToTable
 About
 -----
 
+See the sphinx version of `totable help`_.
+
 Pythonic access to `tokyo cabinet`_ table database api. (NOTE: The 
 original `cython`_ code was from `pykesto`_.)
 The aims is to provide a simple syntax to load and query data in a table.
@@ -386,4 +388,4 @@ See Also
 .. _`cython`: http://cython.org/
 .. _`ctcable.pyx`: http://github.com/brentp/totable/blob/master/src/ctotable.pyx
 .. _`source`: http://sourceforge.net/projects/tokyocabinet/files/
-
+.. _`totable help`: http://packages.python.org/totable/

@@ -1,0 +1,4 @@
+include README.rst
+include totable/*.py
+include totable/tests/*.py
+include test.sh

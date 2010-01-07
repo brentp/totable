@@ -13,7 +13,9 @@ The aims is to provide a simple syntax to load and query data in a table.
 Most of the work is handled by  the `Col`_ query interface. e.g.
 ::
 
-    tbl.select(Col('age') > 18, Col('name').startswith('T'))
+    >>> from totable import ToTable, Col
+    >>> tbl = ToTable('t.tct', 'w')
+    >>> result = tbl.select(Col('age') > 18, Col('name').startswith('T'))
 
 to allow querying columns with numbers and letters transparently. Even
 though tokyo cabinet stores all values as strings.
@@ -24,7 +26,6 @@ Install
 first, install Tokyo-Cabinet `source`_, then,
 from a the directory containing this file:
 ::
-
 
     # requires cython for now.
     $ cython src/ctotable.pyx
